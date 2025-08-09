@@ -24,13 +24,13 @@ critical_logger.setLevel(logging.CRITICAL)
 # Intializing the phonemizer globally significantly reduces the speed
 # now the phonemizer is not initialising at every call
 # Might be less flexible, but it is much-much faster
-global_phonemizer = phonemizer.backend.EspeakBackend(
-    language="en-us",
-    preserve_punctuation=True,
-    with_stress=True,
-    language_switch="remove-flags",
-    logger=critical_logger,
-)
+# global_phonemizer = phonemizer.backend.EspeakBackend(
+#     language="en-us",
+#     preserve_punctuation=True,
+#     with_stress=True,
+#     language_switch="remove-flags",
+#     logger=critical_logger,
+# )
 
 
 # Regular expression matching whitespace:
@@ -102,16 +102,16 @@ def transliteration_cleaners(text):
     return text
 
 
-def english_cleaners2(text):
-    """Pipeline for English text, including abbreviation expansion. + punctuation + stress"""
-    text = convert_to_ascii(text)
-    text = lowercase(text)
-    text = expand_abbreviations(text)
-    phonemes = global_phonemizer.phonemize([text], strip=True, njobs=1)[0]
-    # Added in some cases espeak is not removing brackets
-    phonemes = remove_brackets(phonemes)
-    phonemes = collapse_whitespace(phonemes)
-    return phonemes
+# def english_cleaners2(text):
+#     """Pipeline for English text, including abbreviation expansion. + punctuation + stress"""
+#     text = convert_to_ascii(text)
+#     text = lowercase(text)
+#     text = expand_abbreviations(text)
+#     phonemes = global_phonemizer.phonemize([text], strip=True, njobs=1)[0]
+#     # Added in some cases espeak is not removing brackets
+#     phonemes = remove_brackets(phonemes)
+#     phonemes = collapse_whitespace(phonemes)
+#     return phonemes
 
 
 def ipa_simplifier(text):
