@@ -164,6 +164,12 @@ to the paths of your train and validation filelists.
 make train-ljspeech
 ```
 
+or (for ROCm AMD RX 6600)
+
+```bash
+HSA_OVERRIDE_GFX_VERSION=10.3.0 make train-ljspeech
+```
+
 or
 
 ```bash
