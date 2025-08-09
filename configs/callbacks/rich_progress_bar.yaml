@@ -1,4 +1,5 @@
 # https://lightning.ai/docs/pytorch/latest/api/lightning.pytorch.callbacks.RichProgressBar.html
 
-rich_progress_bar:
-  _target_: lightning.pytorch.callbacks.RichProgressBar
+# disable until https://github.com/Lightning-AI/pytorch-lightning/pull/21016 is included in a release
+# rich_progress_bar:
+#   _target_: lightning.pytorch.callbacks.RichProgressBar
