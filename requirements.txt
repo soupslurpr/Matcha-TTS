@@ -32,7 +32,8 @@ inflect
 Unidecode
 scipy
 torchaudio
-matplotlib
+# https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/issues/2411#issuecomment-2799644550
+matplotlib==3.9.0
 conformer==0.3.2
 diffusers # developed using version ==0.25.0
 notebook
