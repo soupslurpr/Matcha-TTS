@@ -23,6 +23,10 @@ log = pylogger.get_pylogger(__name__)
 
 
 def compute_data_statistics(data_loader: torch.utils.data.DataLoader, out_channels: int):
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
+
+
     """Generate data mean and standard deviation helpful in data normalisation
 
     Args:

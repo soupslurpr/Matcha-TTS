@@ -33,6 +33,10 @@ log = utils.get_pylogger(__name__)
 
 @utils.task_wrapper
 def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning, module="torchaudio")
+
+
     """Trains the model. Can additionally evaluate on a testset, using best weights obtained during
     training.
 
