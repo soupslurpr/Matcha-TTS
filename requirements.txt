@@ -22,7 +22,10 @@ pre-commit      # hooks for applying linters on commit
 rich            # beautiful text formatting in terminal
 pytest          # tests
 # sh            # for running bash commands in some tests (linux/macos only)
-phonemizer      # phonemization of text
+misaki      # phonemization of text
+num2words
+spacy
+transformers
 tensorboard
 librosa
 Cython
