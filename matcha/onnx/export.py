@@ -8,7 +8,7 @@ from lightning import LightningModule
 
 from matcha.cli import VOCODER_URLS, load_matcha, load_vocoder
 
-DEFAULT_OPSET = 15
+DEFAULT_OPSET = 21
 
 SEED = 1234
 random.seed(SEED)
@@ -113,7 +113,7 @@ def main():
         default=None,
         help="Vocoder checkpoint to embed  in the ONNX graph for an `e2e` like experience",
     )
-    parser.add_argument("--opset", type=int, default=DEFAULT_OPSET, help="ONNX opset version to use (default 15")
+    parser.add_argument("--opset", type=int, default=DEFAULT_OPSET, help="ONNX opset version to use (default 21")
 
     args = parser.parse_args()
 
