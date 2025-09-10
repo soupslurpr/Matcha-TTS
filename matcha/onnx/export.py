@@ -5,8 +5,10 @@ from pathlib import Path
 import numpy as np
 import torch
 from lightning import LightningModule
+from torch import Tensor
 
 from matcha.cli import VOCODER_URLS, load_matcha, load_vocoder
+from matcha.models.matcha_tts import MatchaTTS
 
 DEFAULT_OPSET = 21
 
@@ -25,28 +27,25 @@ class MatchaWithVocoder(LightningModule):
         self.matcha = matcha
         self.vocoder = vocoder
 
-    def forward(self, x, x_lengths, scales, spks=None):
-        mel, mel_lengths = self.matcha(x, x_lengths, scales, spks)
+    def forward(self, x, x_lengths, temperature, length_scale, spks=None):
+        mel, mel_lengths = self.matcha(x, x_lengths, temperature, length_scale, spks)
         wavs = self.vocoder(mel).clamp(-1, 1)
         lengths = mel_lengths * 256
         return wavs.squeeze(1), lengths
 
 
-def get_exportable_module(matcha, vocoder, n_timesteps):
+def get_exportable_module(matcha: MatchaTTS, vocoder: LightningModule, n_timesteps: int):
     """
     Return an appropriate `LighteningModule` and output-node names
     based on whether the vocoder is embedded in  the final graph
     """
 
-    def onnx_forward_func(x, x_lengths, scales, spks=None):
+    def onnx_forward_func(x: Tensor, x_lengths: Tensor, temperature: Tensor, length_scale: Tensor, spks: Tensor = None):
         """
         Custom forward function for accepting
         scaler parameters as tensors
         """
-        # Extract scaler parameters from tensors
-        temperature = scales[0]
-        length_scale = scales[1]
-        output = matcha.synthesise(x, x_lengths, n_timesteps, temperature, spks, length_scale)
+        output = matcha.synthesise(x, x_lengths, n_timesteps, temperature[0], spks, length_scale[0])
         return output["mel"], output["mel_lengths"]
 
     # Monkey-patch Matcha's forward function
@@ -68,16 +67,17 @@ def get_inputs(is_multi_speaker):
     x = torch.randint(low=0, high=20, size=(1, dummy_input_length), dtype=torch.long)
     x_lengths = torch.LongTensor([dummy_input_length])
 
-    # Scales
     temperature = 0.667
     length_scale = 1.0
-    scales = torch.Tensor([temperature, length_scale])
+    temperature = torch.Tensor([temperature])
+    length_scale = torch.Tensor([length_scale])
 
-    model_inputs = [x, x_lengths, scales]
+    model_inputs = [x, x_lengths, temperature, length_scale]
     input_names = [
         "x",
         "x_lengths",
-        "scales",
+        "temperature",
+        "length_scale",
     ]
 
     if is_multi_speaker:

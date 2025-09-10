@@ -142,9 +142,10 @@ def main():
     inputs = {
         "x": x,
         "x_lengths": x_lengths,
-        "scales": np.array([args.temperature, args.speaking_rate], dtype=np.float32),
+        "temperature": np.array([args.temperature], dtype=np.float32),
+        "length_scale": np.array([args.speaking_rate], dtype=np.float32),
     }
-    is_multi_speaker = len(model_inputs) == 4
+    is_multi_speaker = len(model_inputs) == 5
     if is_multi_speaker:
         if args.spk is None:
             args.spk = 0
