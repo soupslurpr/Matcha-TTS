@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from lightning import LightningModule
 from torch import Tensor
+from torch.export import Dim
 
 from matcha.cli import VOCODER_URLS, load_matcha, load_vocoder
 from matcha.models.matcha_tts import MatchaTTS
@@ -165,16 +166,29 @@ def main():
     # Create the output directory (if not exists)
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
 
-    model.to_onnx(
-        args.output,
-        dummy_input,
-        input_names=input_names,
-        output_names=output_names,
-        dynamic_axes=dynamic_axes,
-        opset_version=args.opset,
-        export_params=True,
-        do_constant_folding=True,
-    )
+    # static batch size for exported model
+    batch_size = Dim.STATIC
+    max_text_length = Dim("max_text_length")
+    temperature = Dim.STATIC
+    length_scale = Dim.STATIC
+    dynamic_shapes = {
+        "x": {0: batch_size, 1: max_text_length},
+        "x_lengths": {0: batch_size},
+        "temperature": {0: temperature},
+        "length_scale": {0: length_scale}
+    }
+
+    with torch.inference_mode():
+        model.to_onnx(
+            args.output,
+            dummy_input,
+            input_names=input_names,
+            output_names=output_names,
+            dynamic_axes=dynamic_axes,
+            opset_version=args.opset,
+            export_params=True,
+            dynamo=False,
+        )
     print(f"[🍵] ONNX model exported to  {args.output}")
 
 
