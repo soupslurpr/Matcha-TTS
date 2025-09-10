@@ -135,6 +135,7 @@ def main():
 
     dummy_input, input_names = get_inputs(is_multi_speaker)
     model, output_names = get_exportable_module(matcha, vocoder, args.n_timesteps)
+    model = model.eval()
 
     # Set dynamic shape for inputs/outputs
     dynamic_axes = {
