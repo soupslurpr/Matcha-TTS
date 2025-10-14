@@ -12,6 +12,7 @@ from matcha.cli import VOCODER_URLS, load_matcha, load_vocoder
 from matcha.models.matcha_tts import MatchaTTS
 from matcha.utils.model import fix_len_compatibility, sequence_mask, generate_path, denormalize
 
+# TODO: update to a newer opset
 DEFAULT_OPSET = 21
 
 SEED = 1234
