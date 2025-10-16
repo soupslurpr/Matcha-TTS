@@ -16,4 +16,3 @@ run_name: ljspeech
 
 data:
   load_durations: True
-  batch_size: 64
