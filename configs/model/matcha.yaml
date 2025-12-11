@@ -11,6 +11,8 @@ n_spks: ${data.n_spks}
 spk_emb_dim: 64
 n_feats: 80
 data_statistics: ${data.data_statistics}
-out_size: null # Must be divisible by 4
+out_size: 64 # Must be divisible by 4
+# Needs to be true if not using precomputed durations or the model will produce out-of-order speech. Reduces quality.
+# You can set it to true, train, compute durations, then set it to false and train again with the precomputed durations.
 prior_loss: true
 use_precomputed_durations: ${data.load_durations}
