@@ -1,14 +1,14 @@
 encoder_type: RoPE Encoder
 encoder_params:
   n_feats: ${model.n_feats}
-  n_channels: 192
-  filter_channels: 768
-  filter_channels_dp: 256
+  n_channels: 96
+  filter_channels: 384
+  filter_channels_dp: 128
   n_heads: 2
   n_layers: 6
   kernel_size: 3
   p_dropout: 0.1
-  spk_emb_dim: 64
+  spk_emb_dim: 32
   n_spks: 1
   prenet: true
 
