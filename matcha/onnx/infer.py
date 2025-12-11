@@ -89,7 +89,7 @@ def main():
     parser.add_argument(
         "model",
         type=str,
-        help="ONNX model to use",
+        help="ONNX model folder to use",
     )
     parser.add_argument("--vocoder", type=str, default=None, help="Vocoder to use (defaults to None)")
     parser.add_argument("--text", type=str, default=None, help="Text to synthesize")
@@ -122,10 +122,10 @@ def main():
         providers = ["GPUExecutionProvider"]
     else:
         providers = ["CPUExecutionProvider"]
-    model = ort.InferenceSession(args.model, providers=providers)
+    encoder = ort.InferenceSession(f"{args.model}/encoder.onnx", providers=providers)
+    decoder = ort.InferenceSession(f"{args.model}/decoder.onnx", providers=providers)
 
-    model_inputs = model.get_inputs()
-    model_outputs = list(model.get_outputs())
+    encoder_parameters = encoder.get_inputs()
 
     if args.text:
         text_lines = args.text.splitlines()
@@ -139,30 +139,64 @@ def main():
     x = torch.nn.utils.rnn.pad_sequence(x, batch_first=True)
     x = x.detach().cpu().numpy()
     x_lengths = np.array([line["x_lengths"].item() for line in processed_lines], dtype=np.int64)
-    inputs = {
+    encoder_inputs = {
         "x": x,
         "x_lengths": x_lengths,
-        "temperature": np.array([args.temperature], dtype=np.float32),
         "length_scale": np.array([args.speaking_rate], dtype=np.float32),
     }
-    is_multi_speaker = len(model_inputs) == 5
+    decoder_inputs = {
+        # TODO: remove n_timesteps parameter if it needs to be static for the model to be exported
+        "n_timesteps": np.array([5]),
+        "temperature": np.array([args.temperature], dtype=np.float32),
+    }
+    is_multi_speaker = len(encoder_parameters) == 4
     if is_multi_speaker:
         if args.spk is None:
             args.spk = 0
             warn = "[!] Speaker ID not provided! Using speaker ID 0"
             warnings.warn(warn, UserWarning)
-        inputs["spks"] = np.repeat(args.spk, x.shape[0]).astype(np.int64)
+        spks = np.repeat(args.spk, x.shape[0]).astype(np.int64)
+        encoder_inputs["spks"] = spks
 
-    has_vocoder_embedded = model_outputs[0].name == "wav"
-    if has_vocoder_embedded:
-        write_wavs(model, inputs, args.output_dir)
-    elif args.vocoder:
-        external_vocoder = ort.InferenceSession(args.vocoder, providers=providers)
-        write_wavs(model, inputs, args.output_dir, external_vocoder=external_vocoder)
+    print("[🍵] Running Matcha encoder")
+    encoder_t0 = perf_counter()
+    if is_multi_speaker:
+        y_lengths, mu_y, y_mask, spks = encoder.run(None, encoder_inputs)
+        decoder_inputs["spks"] = spks
     else:
-        warn = "[!] A vocoder is not embedded in the graph nor an external vocoder is provided. The mel output will be written as numpy arrays to `*.npy` files in the output directory"
-        warnings.warn(warn, UserWarning)
-        write_mels(model, inputs, args.output_dir)
+        y_lengths, mu_y, y_mask = encoder.run(None, encoder_inputs)
+    wav_lengths = y_lengths * 256
+    # TODO: Split encoder output as done in MatchaTTS.synthesize() to emulate streaming sequentially. Not doing so means
+    #  that the audio generated here may not match production exactly.
+    decoder_inputs["mu_y"] = mu_y
+    decoder_inputs["y_mask"] = y_mask
+    encoder_infer_secs = perf_counter() - encoder_t0
+    print("Generating waveform using Matcha decoder (included vocoder)")
+    decoder_t0 = perf_counter()
+    wavs = decoder.run(None, decoder_inputs)
+    decoder_infer_secs = perf_counter() - decoder_t0
+    wavs = np.squeeze(wavs, axis=1)
+    infer_secs = encoder_infer_secs + decoder_infer_secs
+
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for i, (wav, wav_length) in enumerate(zip(wavs, wav_lengths)):
+        output_filename = output_dir.joinpath(f"output_{i + 1}.wav")
+        audio = wav[:wav_length]
+        print(f"Writing audio to {output_filename}")
+        sf.write(output_filename, audio, 22050, "PCM_24")
+
+    wav_secs = wav_lengths.sum() / 22050
+    print(f"Inference seconds: {infer_secs}")
+    print(f"Generated wav seconds: {wav_secs}")
+    rtf = infer_secs / wav_secs
+    if encoder_infer_secs is not None:
+        encoder_rtf = encoder_infer_secs / wav_secs
+        print(f"Matcha encoder RTF: {encoder_rtf}")
+    if decoder_infer_secs is not None:
+        decoder_rtf = decoder_infer_secs / wav_secs
+        print(f"Matcha decoder RTF: {decoder_rtf}")
+    print(f"Overall RTF: {rtf}")
 
 
 if __name__ == "__main__":
