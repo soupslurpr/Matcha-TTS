@@ -257,3 +257,16 @@ def get_phoneme_durations(durations, phones):
         durations
     ), f"{list(duration_json[-1].values())[0]['endtime'],  sum(durations)}"
     return duration_json
+
+
+def compute_pruning_amount(epoch: int):
+    """
+    Computes pruning amount when training if configured.
+    """
+    # The sum of all returned values needs to be smaller than 1.
+    if epoch == 1000:
+        return 0.5
+    elif epoch == 1001:
+        return 0.25
+    elif 1002 < epoch < 1018:
+        return 0.01

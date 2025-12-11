@@ -1,0 +1,6 @@
+#model_pruning:
+#  _target_: lightning.pytorch.callbacks.ModelPruning
+#  pruning_fn: "l1_unstructured"
+#  amount:
+#    _target_: matcha.utils.utils.compute_pruning_amount
+#    _partial_: true
