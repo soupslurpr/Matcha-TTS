@@ -134,8 +134,24 @@ class MatchaTTS(BaseLightningClass):  # 🍵
         mu_y = mu_y.transpose(1, 2)
         encoder_outputs = mu_y[:, :, :y_max_length]
 
+        # Split encoder output based on out_size and run through decoder to emulate streaming sequentially, which
+        # enables fast time-to-first-audio.
+        # print(mu_y.shape, y_mask.shape)
+        y_max_length_in_batch = self.out_size or mu_y.shape[2]
+        y_length_padding = ((mu_y.shape[2] / y_max_length_in_batch).__ceil__() * y_max_length_in_batch) - mu_y.shape[2]
+        # print(f"y_length_padding: {y_length_padding}")
+        mu_y = torch.nn.functional.pad(mu_y, (0, y_length_padding), value=0)
+        y_mask = torch.nn.functional.pad(y_mask, (0, y_length_padding), value=1)
+        # print(mu_y.shape, y_mask.shape)
+        mu_y = torch.cat(mu_y.split(y_max_length_in_batch, 2), 0)
+        y_mask = torch.cat(y_mask.split(y_max_length_in_batch, 2), 0)
+        # print(mu_y.shape, y_mask.shape)   
+
         # Generate sample tracing the probability flow
         decoder_outputs = self.decoder(mu_y, y_mask, n_timesteps, temperature, spks)
+        decoder_outputs = decoder_outputs[:, :, :y_max_length_in_batch]
+
+        decoder_outputs = torch.cat(decoder_outputs.split(1, 0), 2)
         decoder_outputs = decoder_outputs[:, :, :y_max_length]
 
         t = (dt.datetime.now() - t).total_seconds()
@@ -205,18 +221,30 @@ class MatchaTTS(BaseLightningClass):  # 🍵
         # Cut a small segment of mel-spectrogram in order to increase batch size
         #   - "Hack" taken from Grad-TTS, in case of Grad-TTS, we cannot train batch size 32 on a 24GB GPU without it
         #   - Do not need this hack for Matcha-TTS, but it works with it as well
+        #
+        # Modification to original: Cut the segment in an aligned fashion. For example, when dividing the end of segment
+        # index by out_size, the result is always a whole number. This increases convergence speed and can ensure
+        # segments never include "borders" of mel-spectograms if the out_size is the correct amount (e.g. 64) with
+        # respect to the mel-spectogram parameters.
+        #
+        # The modified lines of code have the original ones commented out above them.
         if not isinstance(out_size, type(None)):
-            max_offset = (y_lengths - out_size).clamp(0)
+            # max_offset = (y_lengths - out_size).clamp(0)
+            max_offset = y_lengths // out_size
             offset_ranges = list(zip([0] * max_offset.shape[0], max_offset.cpu().numpy()))
+            # out_offset = torch.LongTensor(
+            #     [torch.tensor(random.choice(range(start, end)) if end > start else 0) for start, end in offset_ranges]
+            # ).to(y_lengths)
             out_offset = torch.LongTensor(
-                [torch.tensor(random.choice(range(start, end)) if end > start else 0) for start, end in offset_ranges]
-            ).to(y_lengths)
+                [torch.tensor(random.choice(range(start, end + 1)) if end > start else 0) for start, end in offset_ranges]
+            ).to(y_lengths).mul(out_size)
             attn_cut = torch.zeros(attn.shape[0], attn.shape[1], out_size, dtype=attn.dtype, device=attn.device)
             y_cut = torch.zeros(y.shape[0], self.n_feats, out_size, dtype=y.dtype, device=y.device)
 
             y_cut_lengths = []
             for i, (y_, out_offset_) in enumerate(zip(y, out_offset)):
-                y_cut_length = out_size + (y_lengths[i] - out_size).clamp(None, 0)
+                # y_cut_length = out_size + (y_lengths[i] - out_size).clamp(None, 0)
+                y_cut_length = (y_lengths[i] - out_offset_).clamp(None, out_size)
                 y_cut_lengths.append(y_cut_length)
                 cut_lower, cut_upper = out_offset_, out_offset_ + y_cut_length
                 y_cut[i, :, :y_cut_length] = y_[:, cut_lower:cut_upper]
