@@ -3,8 +3,10 @@ import random
 from pathlib import Path
 
 import numpy as np
+import onnxruntime.quantization
 import torch
 from lightning import LightningModule
+from onnxruntime.quantization import quantize_dynamic, QuantType
 from torch import Tensor
 from torch.export import Dim
 
@@ -211,8 +213,12 @@ def main():
     }
 
     with torch.inference_mode():
+        initial_export_directory = f"{args.output}/initial"
+        Path(initial_export_directory).mkdir(parents=True, exist_ok=True)
+        initial_encoder_export_path = f"{initial_export_directory}/encoder.onnx"
+        initial_decoder_export_path = f"{initial_export_directory}/decoder.onnx"
         encoder.to_onnx(
-            f"{args.output}/encoder.onnx",
+            initial_encoder_export_path,
             encoder_dummy_input,
             input_names=encoder_input_names,
             output_names=encoder_output_names,
@@ -223,7 +229,7 @@ def main():
             external_data=False,
         )
         decoder.to_onnx(
-            f"{args.output}/decoder.onnx",
+            initial_decoder_export_path,
             decoder_dummy_input,
             input_names=decoder_input_names,
             output_names=decoder_output_names,
@@ -233,7 +239,70 @@ def main():
             dynamo=True,
             external_data=False,
         )
-    print(f"[🍵] ONNX model exported to {args.output}")
+
+        print(f"[🍵] Initial ONNX model exported to {initial_export_directory}")
+
+        optimized_export_directory = f"{args.output}/optimized"
+        Path(optimized_export_directory).mkdir(parents=True, exist_ok=True)
+        optimized_encoder_export_path = f"{optimized_export_directory}/encoder.onnx"
+        optimized_decoder_export_path = f"{optimized_export_directory}/decoder.onnx"
+        onnxruntime.quantization.quant_pre_process(
+            initial_encoder_export_path,
+            optimized_encoder_export_path,
+            # TODO: Encoder needs `--skip_symbolic_shape true` for some reason.
+            skip_symbolic_shape=True,
+        )
+        onnxruntime.quantization.quant_pre_process(
+            initial_decoder_export_path,
+            optimized_decoder_export_path,
+        )
+
+        print(f"[🍵] Optimized ONNX model exported to {optimized_export_directory}")
+
+        quantized_export_directory = f"{args.output}/quantized"
+        Path(quantized_export_directory).mkdir(parents=True, exist_ok=True)
+        quantized_encoder_export_path = f"{quantized_export_directory}/encoder.onnx"
+        quantized_decoder_export_path = f"{quantized_export_directory}/decoder.onnx"
+        quantize_dynamic(
+            optimized_encoder_export_path,
+            quantized_encoder_export_path,
+            # exclude Conv since ONNX Runtime can't run the quantized version of it yet
+            op_types_to_quantize=['MatMul', 'Attention', 'LSTM'],
+            weight_type=QuantType.QInt8,
+        )
+        quantize_dynamic(
+            optimized_decoder_export_path,
+            quantized_decoder_export_path,
+            # exclude Conv since ONNX Runtime can't run the quantized version of it yet
+            op_types_to_quantize=['MatMul', 'Attention', 'LSTM'],
+            weight_type=QuantType.QInt8,
+        )
+
+        print(f"[🍵] Quantized ONNX model exported to {quantized_export_directory}")
+
+        optimized_quantized_export_directory = f"{args.output}/optimized_quantized"
+        Path(optimized_quantized_export_directory).mkdir(parents=True, exist_ok=True)
+        optimized_quantized_encoder_export_path = f"{optimized_quantized_export_directory}/encoder.onnx"
+        optimized_quantized_decoder_export_path = f"{optimized_quantized_export_directory}/decoder.onnx"
+        onnxruntime.quantization.quant_pre_process(
+            quantized_encoder_export_path,
+            optimized_quantized_encoder_export_path,
+            # TODO: Quantized encoder optimization needs skip_symbolic_shape=True for some reason.
+            skip_symbolic_shape=True,
+        )
+        onnxruntime.quantization.quant_pre_process(
+            quantized_decoder_export_path,
+            optimized_quantized_decoder_export_path,
+            # TODO: Quantized decoder optimization now needs skip_symbolic_shape=True too for some reason.
+            skip_symbolic_shape=True,
+        )
+
+        print(f"[🍵] Optimized quantized ONNX model exported to {optimized_quantized_export_directory}")
+
+        print(f"[🍵] ONNX models exported to {args.output}")
+
+        print(f"""[🍵] Try inferencing by running `python -m matcha.onnx.infer --text "The quick brown fox jumps """ +
+              f"""over the lazy dog." --output-dir outputs {optimized_quantized_export_directory}`""")
 
 
 if __name__ == "__main__":
