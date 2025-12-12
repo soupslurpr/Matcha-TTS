@@ -1,4 +1,5 @@
-This is GrapheneOS's fork of 🍵 Matcha-TTS [ICASSP 2024] (https://arxiv.org/abs/2309.03199) with major speed and efficiency improvements.
+This is GrapheneOS's fork of 🍵 Matcha-TTS [ICASSP 2024] (https://arxiv.org/abs/2309.03199) with major speed and 
+efficiency improvements compared to the original.
 
 The original code and README.md can be found at https://github.com/shivammehta25/Matcha-TTS.
 
