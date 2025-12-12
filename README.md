@@ -29,26 +29,24 @@ therefore allows significantly reducing parameter size. The catch is, that the m
 with no prior loss, but, we can train a model with prior loss, compute durations, then train again with precomputed 
 durations without prior loss.
 
-## Setup
-
-Clone our fork of Misaki and install it using `pip install -e ../misaki`. Make sure to also clone graphemes_to_phonemes 
-and have it contain models as our fork of Misaki depends on it.
-
 ## Training
 
 Currently, only training on LJSpeech has been tested and used. Follow the directions below to train on LJSpeech.
 
-1. Download the dataset from [here](https://keithito.com/LJ-Speech-Dataset/), extract it to `data/LJSpeech-1.1`, and 
-prepare the file lists to point to the extracted data like for 
-[item 5 in the setup of the NVIDIA Tacotron 2 repo](https://github.com/NVIDIA/tacotron2#setup).
-
-2. Clone and enter this repository.
+1. Clone and enter this repository.
 
 ```commandline
 cd Matcha-TTS
 ```
 
-3. Install the package from source
+2. Clone our fork of Misaki and install it using `pip install -e ../misaki`. Make sure to also clone graphemes_to_phonemes 
+and have it contain models as our fork of Misaki depends on it.
+
+2. Download the dataset from [here](https://keithito.com/LJ-Speech-Dataset/), extract it to `data/LJSpeech-1.1`, and 
+prepare the file lists to point to the extracted data like for 
+[item 5 in the setup of the NVIDIA Tacotron 2 repo](https://github.com/NVIDIA/tacotron2#setup).
+
+3. Install this package from source
 
 ```commandline
 pip install -e .
