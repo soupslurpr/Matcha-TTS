@@ -1,9 +1,9 @@
-onnxruntime>=1.23.1
+onnxruntime>=1.23.2
 # --------- pytorch --------- #
-torch>=2.8.0
-torchvision>=0.23.0
-lightning>=2.5.5
-torchmetrics>=1.8.0
+torch==2.9.1
+torchvision==0.24.1
+lightning==2.6.0
+torchmetrics>=1.8.2
 
 # --------- hydra --------- #
 hydra-core==1.3.2
@@ -37,7 +37,7 @@ Unidecode
 scipy
 torchaudio
 # https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/issues/2411#issuecomment-2799644550
-matplotlib==3.9.0
+matplotlib==3.10.8
 conformer==0.3.2
 diffusers # developed using version ==0.25.0
 notebook
