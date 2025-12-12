@@ -29,6 +29,11 @@ therefore allows significantly reducing parameter size. The catch is, that the m
 with no prior loss, but, we can train a model with prior loss, compute durations, then train again with precomputed 
 durations without prior loss.
 
+## Setup
+
+Clone our fork of Misaki and install it using `pip install -e ../misaki`. Make sure to also clone graphemes_to_phonemes 
+and have it contain models as our fork of Misaki depends on it.
+
 ## Training
 
 Currently, only training on LJSpeech has been tested and used. Follow the directions below to train on LJSpeech.

@@ -23,7 +23,8 @@ pre-commit      # hooks for applying linters on commit
 rich            # beautiful text formatting in terminal
 pytest          # tests
 # sh            # for running bash commands in some tests (linux/macos only)
-misaki      # phonemization of text
+# Instead manually install our fork, see README.md Setup section.
+# misaki      # phonemization of text
 num2words
 spacy
 transformers
