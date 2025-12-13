@@ -28,10 +28,9 @@ parameters of the original! This significantly increases training and inference 
 with precomputed durations, setting prior_loss to false, and the out_size alignment previously mentioned.
 
 Setting prior_loss to false means that the encoder does not have its own loss which shapes its output to the target 
-mel spectrogram. Instead, it uses the same loss as the decoder. This results in much more efficient encoding and 
-therefore allows significantly reducing parameter size. The catch is, that the model can't learn durations properly 
-with no prior loss, but, we can train a model with prior loss, compute durations, then train again with precomputed 
-durations without prior loss.
+mel spectrogram. This results in much more efficient encoding and therefore allows significantly reducing parameter 
+size. The catch is, that the model can't learn durations properly with no prior_loss, but, we can train a model with 
+prior_loss, compute durations, then train again with precomputed durations without prior_loss.
 
 ## Training
 
