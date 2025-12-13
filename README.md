@@ -149,6 +149,11 @@ python3 -m matcha.onnx.export matcha.ckpt onnx_model_folder --n-timesteps 5
 **Note** that `n_timesteps` is treated as a hyper-parameter rather than a model input. This means you should specify it 
 during export (not during inference). If not specified, `n_timesteps` is set to **5**.
 
+Additionally, the exported decoder includes the pretrained HiFi-GAN LJ_V3 model so it's usable for speech synthesis 
+out-of-the-box. It doesn't quite match with our model, so there is some low-pitch static noise present in the 
+synthesized speech. We plan to train a vocoder that's fine-tuned to our model to improve speech synthesis fidelity and 
+eliminate static noise.
+
 ### ONNX inference
 
 To run inference on the exported model, first install `onnxruntime` using
