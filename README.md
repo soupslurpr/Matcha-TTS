@@ -17,8 +17,11 @@ Please use Python 3.11 for this repository.
 This fork adds major speed and efficiency improvements to training and inference.
 
 Training speed is improved through aligning the out_size chunk to a multiplier that starts from the beginning. The 
-out_size is set to 64 to align with the mel spectrogram "borders" and provide fast time-to-first-audio during inference. 
-During inference, the decoder should be run in chunks of out_size (default is 64).
+out_size is set to 64 to align with the mel spectrogram "borders". 
+
+During inference, the decoder should be run in chunks of out_size (default is 64). This way, you can decode in a 
+streaming fashion to provide fast time-to-first-audio during inference. This is especially useful for edge 
+use-cases which require low latency such as an on-device text-to-speech engine.
 
 Parameter size has been significantly reduced from 18.2 million to 4.7 million, meaning it's only around 1/4 the 
 parameters of the original! This significantly increases training and inference speed and is achieved through training 
