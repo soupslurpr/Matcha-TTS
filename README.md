@@ -24,7 +24,7 @@ Parameter size has been significantly reduced from 18.2 million to 4.7 million, 
 parameters of the original! This significantly increases training and inference speed and is achieved through training 
 with precomputed durations, setting prior_loss to false, and the out_size alignment previously mentioned.
 
-Setting prior_loss to false means that the encoder does not have its own loss which shapes it's output to the final
+Setting prior_loss to false means that the encoder does not have its own loss which shapes its output to the final
 mel spectrogram. Instead, it uses the same loss as the decoder. This results in much more efficient encoding and 
 therefore allows significantly reducing parameter size. The catch is, that the model can't learn durations properly 
 with no prior loss, but, we can train a model with prior loss, compute durations, then train again with precomputed 
