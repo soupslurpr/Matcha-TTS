@@ -146,7 +146,8 @@ then run the following:
 python3 -m matcha.onnx.export matcha.ckpt onnx_model_folder --n-timesteps 5
 ```
 
-**Note** that `n_timesteps` is treated as a hyper-parameter rather than a model input. This means you should specify it during export (not during inference). If not specified, `n_timesteps` is set to **5**.
+**Note** that `n_timesteps` is treated as a hyper-parameter rather than a model input. This means you should specify it 
+during export (not during inference). If not specified, `n_timesteps` is set to **5**.
 
 ### ONNX inference
 
