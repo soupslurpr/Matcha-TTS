@@ -38,7 +38,7 @@ Currently, only training on LJSpeech has been tested and used. Follow the direct
 
 1. Clone and enter this repository.
 
-```commandline
+```bash
 cd Matcha-TTS
 ```
 
@@ -51,7 +51,7 @@ prepare the file lists to point to the extracted data like for
 
 4. Install this package from source
 
-```commandline
+```bash
 pip install -e .
 ```
 
@@ -84,7 +84,7 @@ data_statistics:  # Computed for ljspeech dataset
 
 7. Run initial training to compute durations
 
-```commandline
+```bash
 python matcha/train.py experiment=ljspeech
 ```
 
@@ -115,7 +115,7 @@ durations inside the `data/LJSpeech-1.1/durations` directory.
 
 10. Run final training with precomputed durations
 
-```commandline
+```bash
 python matcha/train.py experiment=ljspeech_from_durations
 ```
 
