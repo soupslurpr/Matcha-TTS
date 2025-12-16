@@ -65,6 +65,7 @@ place them at the correct paths.
 ```yaml
 train_filelist_path: data/filelists/ljs_audio_text_train.txt
 valid_filelist_path: data/filelists/ljs_audio_text_val.txt
+test_filelist_path: data/filelists/ljs_audio_text_test.txt
 ```
 
 7. Generate normalisation statistics with the yaml file of dataset configuration
