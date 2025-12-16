@@ -94,7 +94,11 @@ or for multi-gpu training, run
 python matcha/train.py experiment=ljspeech trainer.devices=[0,1]
 ```
 
-TODO() steps seems to be a good stopping point.
+499 epochs seems to be a good stopping point. At that point, train_dur_loss is ~0.3722, and val_dur_loss is ~0.3627 and 
+val_dur_loss has stabilized. 
+
+After that point, the model seems to start overfitting on duration prediction as the train_dur_loss continues going 
+down at a slow pace, while val_dur_loss slowly goes up.
 
 7. Synthesise from the initial custom trained model
 
