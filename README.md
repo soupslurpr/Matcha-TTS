@@ -45,17 +45,17 @@ cd Matcha-TTS
 2. Clone our fork of Misaki and install it using `pip install -e ../misaki`. Make sure to also clone graphemes_to_phonemes 
 and have it contain models as our fork of Misaki depends on it.
 
-2. Download the dataset from [here](https://keithito.com/LJ-Speech-Dataset/), extract it to `data/LJSpeech-1.1`, and 
+3. Download the dataset from [here](https://keithito.com/LJ-Speech-Dataset/), extract it to `data/LJSpeech-1.1`, and 
 prepare the file lists to point to the extracted data like for 
 [item 5 in the setup of the NVIDIA Tacotron 2 repo](https://github.com/NVIDIA/tacotron2#setup).
 
-3. Install this package from source
+4. Install this package from source
 
 ```commandline
 pip install -e .
 ```
 
-4. Go to `configs/data/ljspeech.yaml` and change to the paths of your train and validation filelists
+5. Go to `configs/data/ljspeech.yaml` and change to the paths of your train and validation filelists
 
 The default is the names of the files used by the NVIDIA Tacotron 2 repo; you just need to download them from 
 https://github.com/NVIDIA/tacotron2/tree/master/filelists, rename by removing "_filelist" at the end before ".txt", and 
@@ -66,7 +66,7 @@ train_filelist_path: data/filelists/ljs_audio_text_train.txt
 valid_filelist_path: data/filelists/ljs_audio_text_val.txt
 ```
 
-5. Generate normalisation statistics with the yaml file of dataset configuration
+6. Generate normalisation statistics with the yaml file of dataset configuration
 
 ```bash
 matcha-data-stats -i ljspeech.yaml
@@ -82,7 +82,7 @@ data_statistics:  # Computed for ljspeech dataset
   mel_std: 2.064393997192383
 ```
 
-6. Run initial training to compute durations
+7. Run initial training to compute durations
 
 ```commandline
 python matcha/train.py experiment=ljspeech
@@ -100,7 +100,7 @@ val_dur_loss has stabilized.
 After that point, the model seems to start overfitting on duration prediction as the train_dur_loss continues going 
 down at a slow pace, while val_dur_loss slowly goes up.
 
-7. Synthesise from the initial custom trained model
+8. Synthesise from the initial custom trained model
 
 Make sure that the initial model works at least OK, the quality will get better in the final model.
 
@@ -108,12 +108,12 @@ Make sure that the initial model works at least OK, the quality will get better 
 matcha-tts --text "<INPUT TEXT>" --checkpoint_path <PATH TO CHECKPOINT> --vocoder hifi-gan/upstream-trained-models/LJ_V3/generator_v3
 ```
 
-8. Generate durations
+9. Generate durations
 
 Follow the section [extract phoneme alignments from Matcha-TTS](#Extract-phoneme-alignments-from-Matcha-TTS) and put the
 durations inside the `data/LJSpeech-1.1/durations` directory.
 
-7. Run final training with precomputed durations
+10. Run final training with precomputed durations
 
 ```commandline
 python matcha/train.py experiment=ljspeech_from_durations
@@ -127,7 +127,7 @@ python matcha/train.py experiment=ljspeech_from_durations trainer.devices=[0,1]
 
 TODO() steps seems to be a good stopping point.
 
-9. Synthesize from the final custom trained model
+11. Synthesize from the final custom trained model
 
 ```bash
 matcha-tts --text "<INPUT TEXT>" --checkpoint_path <PATH TO CHECKPOINT> --vocoder hifi-gan/upstream-trained-models/LJ_V3/generator_v3
