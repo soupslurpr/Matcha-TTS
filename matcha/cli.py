@@ -25,7 +25,7 @@ MATCHA_URLS = {
 VOCODER_URLS = {
     "hifigan_T2_v1": "https://github.com/shivammehta25/Matcha-TTS-checkpoints/releases/download/v1.0/generator_v1",  # Old url: https://drive.google.com/file/d/14NENd4equCBLyyCSke114Mv6YR_j_uFs/view?usp=drive_link
     "hifigan_univ_v1": "https://github.com/shivammehta25/Matcha-TTS-checkpoints/releases/download/v1.0/g_02500000",  # Old url: https://drive.google.com/file/d/1qpgI41wNXFcH-iKq1Y42JlBC9j0je8PW/view?usp=drive_link
-    "generator_v3": "" # no download, only local
+    "hifi-gan/upstream-trained-models/LJ_V3/generator_v3": "" # no download, only local
 }
 
 MULTISPEAKER_MODEL = {
@@ -100,7 +100,7 @@ def load_vocoder(vocoder_name, checkpoint_path, device):
     vocoder = None
     if vocoder_name in ("hifigan_T2_v1", "hifigan_univ_v1"):
         vocoder = load_hifigan(checkpoint_path, device, False)
-    elif vocoder_name in ("generator_v3"):
+    elif vocoder_name in "hifi-gan/upstream-trained-models/LJ_V3/generator_v3":
         vocoder = load_hifigan(checkpoint_path, device, True)
     else:
         raise NotImplementedError(

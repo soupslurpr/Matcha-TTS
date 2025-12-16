@@ -10,7 +10,7 @@ from onnxruntime.quantization import quantize_dynamic, QuantType
 from torch import Tensor
 from torch.export import Dim
 
-from matcha.cli import VOCODER_URLS, load_matcha, load_vocoder
+from matcha.cli import load_matcha, load_vocoder
 from matcha.models.matcha_tts import MatchaTTS
 from matcha.utils.model import fix_len_compatibility, sequence_mask, generate_path, denormalize
 
@@ -106,7 +106,8 @@ class MatchaDecoder(LightningModule):
         self.mel_mean = matcha.mel_mean
         self.mel_std = matcha.mel_std
 
-        self.vocoder, _ = load_vocoder("generator_v3", "hifi-gan/upstream-trained-models/LJ_V3/generator_v3", "cpu")
+        self.vocoder, _ = load_vocoder("hifi-gan/upstream-trained-models/LJ_V3/generator_v3",
+                                       "hifi-gan/upstream-trained-models/LJ_V3/generator_v3", "cpu")
 
     def forward(self, mu_y: Tensor, y_mask: Tensor, n_timesteps: Tensor, temperature: Tensor, spks: Tensor = None):
         # TODO: if n_timesteps can't be dynamic, move the forward parameter to __init__ to make it static
