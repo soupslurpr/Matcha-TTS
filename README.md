@@ -105,7 +105,7 @@ down at a slow pace, while val_dur_loss slowly goes up.
 Make sure that the initial model works at least OK, the quality will get better in the final model.
 
 ```bash
-matcha-tts --text "<INPUT TEXT>" --checkpoint_path <PATH TO CHECKPOINT>
+matcha-tts --text "<INPUT TEXT>" --checkpoint_path <PATH TO CHECKPOINT> --vocoder hifi-gan/upstream-trained-models/LJ_V3/generator_v3
 ```
 
 8. Generate durations
@@ -130,7 +130,7 @@ TODO() steps seems to be a good stopping point.
 9. Synthesize from the final custom trained model
 
 ```bash
-matcha-tts --text "<INPUT TEXT>" --checkpoint_path <PATH TO CHECKPOINT>
+matcha-tts --text "<INPUT TEXT>" --checkpoint_path <PATH TO CHECKPOINT> --vocoder hifi-gan/upstream-trained-models/LJ_V3/generator_v3
 ```
 
 ## ONNX support
