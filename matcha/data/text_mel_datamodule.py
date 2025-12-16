@@ -26,6 +26,7 @@ class TextMelDataModule(LightningDataModule):
         name,
         train_filelist_path,
         valid_filelist_path,
+        test_filelist_path,
         batch_size,
         num_workers,
         pin_memory,
@@ -89,6 +90,22 @@ class TextMelDataModule(LightningDataModule):
             self.hparams.seed,
             self.hparams.load_durations,
         )
+        self.testset = TextMelDataset(  # pylint: disable=attribute-defined-outside-init
+            self.hparams.test_filelist_path,
+            self.hparams.n_spks,
+            self.hparams.cleaners,
+            self.hparams.add_blank,
+            self.hparams.n_fft,
+            self.hparams.n_feats,
+            self.hparams.sample_rate,
+            self.hparams.hop_length,
+            self.hparams.win_length,
+            self.hparams.f_min,
+            self.hparams.f_max,
+            self.hparams.data_statistics,
+            self.hparams.seed,
+            self.hparams.load_durations,
+        )
 
     def train_dataloader(self):
         return DataLoader(
@@ -103,6 +120,16 @@ class TextMelDataModule(LightningDataModule):
     def val_dataloader(self):
         return DataLoader(
             dataset=self.validset,
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
+            shuffle=False,
+            collate_fn=TextMelBatchCollate(self.hparams.n_spks),
+        )
+
+    def test_dataloader(self):
+        return DataLoader(
+            dataset=self.testset,
             batch_size=self.hparams.batch_size,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,

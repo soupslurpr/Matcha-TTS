@@ -20,7 +20,7 @@ from torch import nn
 from tqdm.auto import tqdm
 
 from matcha.cli import get_device
-from matcha.data.text_mel_datamodule import TextMelDataModule
+from matcha.data.text_mel_datamodule import TextMelDataModule, TextMelDataset
 from matcha.models.matcha_tts import MatchaTTS
 from matcha.utils.logging_utils import pylogger
 from matcha.utils.utils import get_phoneme_durations
@@ -142,48 +142,63 @@ def main():
         cfg["valid_filelist_path"] = str(os.path.join(root_path, cfg["valid_filelist_path"]))
         cfg["load_durations"] = False
 
-    if args.output_folder is not None:
-        output_folder = Path(args.output_folder)
-    else:
-        output_folder = Path(cfg["train_filelist_path"]).parent / "durations"
-
-    print(f"Output folder set to: {output_folder}")
-
-    if os.path.exists(output_folder) and not args.force:
-        print("Folder already exists. Use -f to force overwrite")
-        sys.exit(1)
-
-    output_folder.mkdir(parents=True, exist_ok=True)
-
     print(f"Preprocessing: {cfg['name']} from training filelist: {cfg['train_filelist_path']}")
     print("Loading model...")
     device = get_device(args)
-    model = MatchaTTS.load_from_checkpoint(args.checkpoint_path, map_location=device)
+    model = MatchaTTS.load_from_checkpoint(args.checkpoint_path, map_location=device, weights_only=False)
+
+    previous_output_folders: list[Path] = list()
+
+    def setup_and_get_output_folder(text_mel_dataset: TextMelDataset):
+        if args.output_folder is not None:
+            output_folder = Path(args.output_folder)
+        else:
+            filepath_and_text = text_mel_dataset.filepaths_and_text[0]
+            filepath = Path(filepath_and_text[0])
+            output_folder = filepath.parent.parent / "durations"
+
+        print(f"Output folder set to: {output_folder}")
+
+        if output_folder not in previous_output_folders and os.path.exists(output_folder) and not args.force:
+            print("Folder already exists. Use -f to force overwrite")
+            sys.exit(1)
+
+        output_folder.mkdir(parents=True, exist_ok=True)
+        previous_output_folders.append(output_folder)
+
+        return output_folder
 
     text_mel_datamodule = TextMelDataModule(**cfg)
     text_mel_datamodule.setup()
     try:
         print("Computing stats for training set if exists...")
         train_dataloader = text_mel_datamodule.train_dataloader()
+        output_folder = setup_and_get_output_folder(text_mel_datamodule.trainset)
         compute_durations(train_dataloader, model, device, output_folder)
+        print(f"[+] Training set data statistics saved to: {output_folder}")
     except lightning.fabric.utilities.exceptions.MisconfigurationException:
         print("No training set found")
 
     try:
         print("Computing stats for validation set if exists...")
         val_dataloader = text_mel_datamodule.val_dataloader()
+        output_folder = setup_and_get_output_folder(text_mel_datamodule.validset)
         compute_durations(val_dataloader, model, device, output_folder)
+        print(f"[+] Validation set data statistics saved to: {output_folder}")
     except lightning.fabric.utilities.exceptions.MisconfigurationException:
         print("No validation set found")
 
     try:
         print("Computing stats for test set if exists...")
         test_dataloader = text_mel_datamodule.test_dataloader()
+        output_folder = setup_and_get_output_folder(text_mel_datamodule.testset)
         compute_durations(test_dataloader, model, device, output_folder)
+        print(f"[+] Test set data statistics saved to: {output_folder}")
+
     except lightning.fabric.utilities.exceptions.MisconfigurationException:
         print("No test set found")
 
-    print(f"[+] Done! Data statistics saved to: {output_folder}")
+    print(f"[+] Done! All data statistics saved.")
 
 
 if __name__ == "__main__":
