@@ -114,7 +114,7 @@ def load_vocoder(vocoder_name, checkpoint_path, device):
 
 def load_matcha(model_name, checkpoint_path, device):
     print(f"[!] Loading {model_name}!")
-    model = MatchaTTS.load_from_checkpoint(checkpoint_path, map_location=device)
+    model = MatchaTTS.load_from_checkpoint(checkpoint_path, map_location=device, weights_only=False)
     _ = model.eval()
 
     print(f"[+] {model_name} loaded!")
