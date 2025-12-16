@@ -190,16 +190,11 @@ python3 -m matcha.onnx.infer model.onnx --text "hey" --output-dir ./outputs --gp
 
 ## Extract phoneme alignments from Matcha-TTS
 
-If the dataset is structured as
+If the dataset is structured as (minimum example)
 
 ```bash
 data/
 └── LJSpeech-1.1
-    ├── metadata.csv
-    ├── README
-    ├── test.txt
-    ├── train.txt
-    ├── val.txt
     └── wavs
 ```
 Then you can extract the phoneme level alignments from a Trained Matcha-TTS model using:
