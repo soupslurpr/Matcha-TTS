@@ -77,7 +77,7 @@ def assert_required_models_available(args):
         model_path = save_dir / f"{args.model}.ckpt"
         assert_model_downloaded(model_path, MATCHA_URLS[args.model])
 
-    vocoder_path = save_dir / f"{args.vocoder}"
+    vocoder_path = f"{args.vocoder}"
     assert_model_downloaded(vocoder_path, VOCODER_URLS[args.vocoder])
     return {"matcha": model_path, "vocoder": vocoder_path}
 
