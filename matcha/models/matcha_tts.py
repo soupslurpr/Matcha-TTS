@@ -221,30 +221,18 @@ class MatchaTTS(BaseLightningClass):  # 🍵
         # Cut a small segment of mel-spectrogram in order to increase batch size
         #   - "Hack" taken from Grad-TTS, in case of Grad-TTS, we cannot train batch size 32 on a 24GB GPU without it
         #   - Do not need this hack for Matcha-TTS, but it works with it as well
-        #
-        # Modification to original: Cut the segment in an aligned fashion. For example, when dividing the end of segment
-        # index by out_size, the result is always a whole number. This increases convergence speed and can ensure
-        # segments never include "borders" of mel-spectograms if the out_size is the correct amount (e.g. 64) with
-        # respect to the mel-spectogram parameters.
-        #
-        # The modified lines of code have the original ones commented out above them.
         if not isinstance(out_size, type(None)):
-            # max_offset = (y_lengths - out_size).clamp(0)
-            max_offset = y_lengths // out_size
+            max_offset = (y_lengths - out_size).clamp(0)
             offset_ranges = list(zip([0] * max_offset.shape[0], max_offset.cpu().numpy()))
-            # out_offset = torch.LongTensor(
-            #     [torch.tensor(random.choice(range(start, end)) if end > start else 0) for start, end in offset_ranges]
-            # ).to(y_lengths)
             out_offset = torch.LongTensor(
-                [torch.tensor(random.choice(range(start, end + 1)) if end > start else 0) for start, end in offset_ranges]
-            ).to(y_lengths).mul(out_size)
+                [torch.tensor(random.choice(range(start, end)) if end > start else 0) for start, end in offset_ranges]
+            ).to(y_lengths)
             attn_cut = torch.zeros(attn.shape[0], attn.shape[1], out_size, dtype=attn.dtype, device=attn.device)
             y_cut = torch.zeros(y.shape[0], self.n_feats, out_size, dtype=y.dtype, device=y.device)
 
             y_cut_lengths = []
             for i, (y_, out_offset_) in enumerate(zip(y, out_offset)):
-                # y_cut_length = out_size + (y_lengths[i] - out_size).clamp(None, 0)
-                y_cut_length = (y_lengths[i] - out_offset_).clamp(None, out_size)
+                y_cut_length = out_size + (y_lengths[i] - out_size).clamp(None, 0)
                 y_cut_lengths.append(y_cut_length)
                 cut_lower, cut_upper = out_offset_, out_offset_ + y_cut_length
                 y_cut[i, :, :y_cut_length] = y_[:, cut_lower:cut_upper]
