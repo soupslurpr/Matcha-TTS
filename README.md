@@ -16,21 +16,24 @@ Please use Python 3.11 for this repository.
 
 This fork adds major speed and efficiency improvements to training and inference.
 
-Training speed is improved through aligning the out_size chunk to a multiplier that starts from the beginning. The 
-out_size is set to 64 to align with the mel spectrogram "borders". 
+We added usage of torch.compile() to boost training speeds.
 
-During inference, the decoder should be run in chunks of out_size (default is 64). This way, you can decode in a 
-streaming fashion to provide fast time-to-first-audio during inference. This is especially useful for edge 
-use-cases which require low latency such as an on-device text-to-speech engine.
+We set out_size to 64, which we've found allows a smaller model to attain much higher quality than when it's not set. 
+We haven't compared other values for out_size yet, but we chose 64 because it allows a very fast time-to-first-audio 
+when inferencing in chunks.
+
+During inference, the decoder should be run in chunks of out_size. This way, you can decode in a streaming fashion to 
+provide fast time-to-first-audio during inference. This is especially useful for edge use-cases which require low 
+latency such as an on-device text-to-speech engine. The exported ONNX model's decoder only accepts input in chunks of 
+out_size.
+
+We train with precomputed durations and prior_loss set to False as it seems to prevent the duration predictor part of the model from overfitting 
+for some reason. We use the first stage model when it has the lowest duration prediction validation loss to compute 
+durations. Also, training with precomputed durations is faster.
 
 Parameter size has been significantly reduced from 18.2 million to 4.7 million, meaning it's only around 1/4 the 
-parameters of the original! This significantly increases training and inference speed and is achieved through training 
-with precomputed durations, setting prior_loss to false, and the out_size alignment previously mentioned.
-
-Setting prior_loss to false means that the encoder does not have its own loss which shapes its output to the target 
-mel spectrogram. This results in much more efficient encoding and therefore allows significantly reducing parameter 
-size. The catch is, that the model can't learn durations properly with no prior_loss, but, we can train a model with 
-prior_loss, compute durations, then train again with precomputed durations without prior_loss.
+parameters of the original! This further increases training and inference speed and is achieved through training 
+with precomputed durations and the out_size previously mentioned.
 
 ## Training
 
@@ -96,8 +99,8 @@ or for multi-gpu training, run
 python matcha/train.py experiment=ljspeech trainer.devices=[0,1]
 ```
 
-499 epochs seems to be a good stopping point. At that point, train_dur_loss is ~0.3722, and val_dur_loss is ~0.3627 and 
-val_dur_loss has stabilized. 
+Around 499 epochs seems to be a good stopping point. At that point, train_dur_loss was ~0.3722, and val_dur_loss was 
+~0.3627 and val_dur_loss had been stabilized. Please make sure the checkpoint you use does not have a loss spike.
 
 After that point, the model seems to start overfitting on duration prediction as the train_dur_loss continues going 
 down at a slow pace, while val_dur_loss slowly goes up.
@@ -127,7 +130,8 @@ or for multi-gpu training, run
 python matcha/train.py experiment=ljspeech_from_durations trainer.devices=[0,1]
 ```
 
-TODO() steps seems to be a good stopping point.
+We stopped at 1899 epochs for the model currently deployed in GrapheneOS Speech Services. Please make sure the 
+checkpoint you use does not have a loss spike.
 
 12. Synthesize from the final custom trained model
 
