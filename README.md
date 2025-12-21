@@ -130,8 +130,9 @@ or for multi-gpu training, run
 python matcha/train.py experiment=ljspeech_from_durations trainer.devices=[0,1]
 ```
 
-We stopped at 1899 epochs for the model currently deployed in GrapheneOS Speech Services. Please make sure the 
-checkpoint you use does not have a loss spike.
+We stopped at 1899 epochs for the model currently deployed in GrapheneOS Speech Services. At that point, train_epoch 
+loss was ~0.6706 and val_epoch loss was ~0.6823 and had been stabilized. Please make sure the checkpoint you use does 
+not have a loss spike.
 
 12. Synthesize from the final custom trained model
 
