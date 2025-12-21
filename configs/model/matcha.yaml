@@ -12,9 +12,9 @@ spk_emb_dim: 64
 n_feats: 80
 data_statistics: ${data.data_statistics}
 out_size: 64 # Must be divisible by 4
-# Needs to be true if not using precomputed durations or the model will produce out-of-order speech. Reduces quality.
-# You can set it to true, train, compute durations, then set it to false and train again with the precomputed durations.
+# Needs to be true if not using precomputed durations or the model will produce out-of-order speech.
 #
-# The ljspeech_from_durations experiment automatically overrides it to false.
+# The ljspeech_from_durations experiment automatically overrides it to false because it seems to make the model overfit
+#  duration prediction.
 prior_loss: true
 use_precomputed_durations: ${data.load_durations}
