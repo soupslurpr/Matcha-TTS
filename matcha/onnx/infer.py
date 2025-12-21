@@ -8,6 +8,7 @@ import numpy as np
 import onnxruntime as ort
 import soundfile as sf
 import torch
+from numpy.core.records import ndarray
 
 from matcha.cli import plot_spectrogram_to_numpy, process_text
 
@@ -83,6 +84,8 @@ def write_mels(model, inputs, output_dir):
 
 
 def main():
+    # print("Infer hasn't been updated to support splitting encoder according to decoder out_size yet.")
+    # return
     parser = argparse.ArgumentParser(
         description=" 🍵 Matcha-TTS: A fast TTS architecture with conditional flow matching"
     )
@@ -93,6 +96,7 @@ def main():
     )
     parser.add_argument("--vocoder", type=str, default=None, help="Vocoder to use (defaults to None)")
     parser.add_argument("--text", type=str, default=None, help="Text to synthesize")
+    parser.add_argument("--out-size", type=int, default=None, help="out_size to use, should be same as out_size of decoder (defaults to using full out_size)")
     parser.add_argument("--file", type=str, default=None, help="Text file to synthesize")
     parser.add_argument("--spk", type=int, default=None, help="Speaker ID")
     parser.add_argument(
@@ -166,25 +170,37 @@ def main():
     else:
         y_lengths, mu_y, y_mask = encoder.run(None, encoder_inputs)
     wav_lengths = y_lengths * 256
-    # TODO: Split encoder output as done in MatchaTTS.synthesize() to emulate streaming sequentially. Not doing so means
-    #  that the audio generated here may not match production exactly.
-    decoder_inputs["mu_y"] = mu_y
-    decoder_inputs["y_mask"] = y_mask
     encoder_infer_secs = perf_counter() - encoder_t0
     print("Generating waveform using Matcha decoder (included vocoder)")
+
+    # Split encoder output as done in MatchaTTS.synthesize() to emulate streaming sequentially.
     decoder_t0 = perf_counter()
-    wavs = decoder.run(None, decoder_inputs)
+    mu_y = torch.from_numpy(mu_y)
+    y_mask = torch.from_numpy(y_mask)
+    y_max_length_in_batch = args.out_size or mu_y.shape[2]
+    y_length_padding = ((mu_y.shape[2] / y_max_length_in_batch).__ceil__() * y_max_length_in_batch) - mu_y.shape[2]
+    mu_y = torch.nn.functional.pad(mu_y, (0, y_length_padding), value=0)
+    y_mask = torch.nn.functional.pad(y_mask, (0, y_length_padding), value=1)
+    mu_y = torch.cat(mu_y.split(y_max_length_in_batch, 2), 0)
+    y_mask = torch.cat(y_mask.split(y_max_length_in_batch, 2), 0)
+
+    wavs = list()
+    for index in range(mu_y.shape[0]):
+        decoder_inputs["mu_y"] = mu_y[index, :, :].unsqueeze(0).numpy()
+        decoder_inputs["y_mask"] = y_mask[index, :, :].unsqueeze(0).numpy()
+        wav = decoder.run(None, decoder_inputs)
+        wavs.append(wav)
+
     decoder_infer_secs = perf_counter() - decoder_t0
-    wavs = np.squeeze(wavs, axis=1)
     infer_secs = encoder_infer_secs + decoder_infer_secs
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    for i, (wav, wav_length) in enumerate(zip(wavs, wav_lengths)):
-        output_filename = output_dir.joinpath(f"output_{i + 1}.wav")
-        audio = wav[:wav_length]
-        print(f"Writing audio to {output_filename}")
-        sf.write(output_filename, audio, 22050, "PCM_24")
+    audio = np.concatenate([np.squeeze(wav)[:(y_max_length_in_batch * 256)] for wav in wavs])
+    audio = audio[:wav_lengths[0]]
+    output_filename = output_dir.joinpath(f"output.wav")
+    print(f"Writing audio to {output_filename}")
+    sf.write(output_filename, audio, 22050, "PCM_24")
 
     wav_secs = wav_lengths.sum() / 22050
     print(f"Inference seconds: {infer_secs}")
