@@ -90,13 +90,13 @@ data_statistics:  # Computed for ljspeech dataset
 8. Run initial training to compute durations
 
 ```bash
-python matcha/train.py experiment=ljspeech
+python -m matcha.train experiment=ljspeech
 ```
 
 or for multi-gpu training, run
 
 ```bash
-python matcha/train.py experiment=ljspeech trainer.devices=[0,1]
+python -m matcha.train experiment=ljspeech trainer.devices=[0,1]
 ```
 
 Around 499 epochs seems to be a good stopping point. At that point, train_dur_loss was ~0.3722, and val_dur_loss was 
@@ -121,13 +121,13 @@ durations inside the `data/LJSpeech-1.1/durations` directory.
 11. Run final training with precomputed durations
 
 ```bash
-python matcha/train.py experiment=ljspeech_from_durations
+python -m matcha.train experiment=ljspeech_from_durations
 ```
 
 or for multi-gpu training, run
 
 ```bash
-python matcha/train.py experiment=ljspeech_from_durations trainer.devices=[0,1]
+python -m matcha.train experiment=ljspeech_from_durations trainer.devices=[0,1]
 ```
 
 We stopped at 1899 epochs for the model currently deployed in GrapheneOS Speech Services. At that point, train_epoch 
